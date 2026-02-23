@@ -50,11 +50,59 @@ class CityController extends Controller
         return view('cities.index', compact('cities', 'counties'));
     }
 
-    public function create() { /* ... */ }
-    public function store(Request $request) { /* ... */ }
-    public function edit(City $city) { /* ... */ }
-    public function update(Request $request, City $city) { /* ... */ }
-    public function destroy(City $city) { /* ... */ }
+public function create()
+    {
+        $counties = County::orderBy('name')->get();
+        return view('cities.create', compact('counties'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'county_id' => 'required|exists:counties,id',
+            'postal_code' => 'required|string|size:4',
+        ]);
+
+        $city = City::create([
+            'name' => $request->name,
+            'county_id' => $request->county_id,
+        ]);
+
+        PostalCode::create([
+            'code' => $request->postal_code,
+            'city_id' => $city->id,
+        ]);
+
+        return redirect()->route('cities.index')->with('success', 'Város sikeresen hozzáadva!');
+    }
+
+    public function edit(City $city)
+    {
+        $counties = County::orderBy('name')->get();
+        return view('cities.edit', compact('city', 'counties'));
+    }
+
+    public function update(Request $request, City $city)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'county_id' => 'required|exists:counties,id',
+        ]);
+
+        $city->update([
+            'name' => $request->name,
+            'county_id' => $request->county_id,
+        ]);
+
+        return redirect()->route('cities.index')->with('success', 'Város frissítve!');
+    }
+
+    public function destroy(City $city)
+    {
+        $city->delete();
+        return redirect()->route('cities.index')->with('success', 'Város törölve!');
+    }
 
     public function exportCsv(Request $request)
     {
